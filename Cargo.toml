@@ -1,0 +1,7 @@
+[package]
+name = "okasakish"
+version = "0.1.0"
+authors = ["kazagistar"]
+
+[dev-dependencies]
+quickcheck = "*"
