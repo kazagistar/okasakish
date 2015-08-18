@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::iter::FromIterator;
 
 pub trait Heap<T: Ord + Clone> {
 	fn empty() -> Self;
@@ -24,6 +25,13 @@ fn link<T>(rank: i32, elem: T, a: Link<T>, b: Link<T>) -> Link<T> {
 	}))
 }
 
+fn rank<T>(link: &Link<T>) -> i32 {
+	match link.as_ref() {
+		None => 0,
+		Some(node) => node.rank,
+	}
+}
+
 pub struct Node<T> {
 	rank: i32,
 	elem: T,
@@ -32,18 +40,23 @@ pub struct Node<T> {
 }
 
 impl<T: Ord + Clone> Heap<T> for LeftistHeap<T> {
+	/// O(1)
 	fn empty() -> Self {
 		LeftistHeap { head: None }
 	}
 
+	/// O(1)
 	fn is_empty(&self) -> bool {
 		self.head.is_none()
 	}
 
+	/// O(log(n))
 	fn insert(&self, item: T) -> Self {
 		self.merge(&LeftistHeap { head: link(1, item, None, None) })
 	}
 
+
+	/// O(log(n))
 	fn merge(&self, other: &Self) -> Self {
 		LeftistHeap { head: match (self.head.as_ref(), other.head.as_ref()) {
 			(None, None) => None,
@@ -57,12 +70,6 @@ impl<T: Ord + Clone> Heap<T> for LeftistHeap<T> {
 					let wrapped = LeftistHeap { head: h2.b.clone() };
 					(h2.elem.clone(), h2.a.clone(), self.merge(&wrapped).head)
 				};
-				fn rank<T>(link: &Link<T>) -> i32 {
-					match link.as_ref() {
-						None => 0,
-						Some(node) => node.rank,
-					}
-				}
 				let ra = rank(&a);
 				let rb = rank(&b);
 				if ra >= rb {
@@ -74,12 +81,14 @@ impl<T: Ord + Clone> Heap<T> for LeftistHeap<T> {
 		}}
 	}
 
+	/// O(1)
 	fn find_min(&self) -> Option<T> {
 		self.head.as_ref().map(|node| {
 			node.elem.clone()
 		})
 	}
 
+	/// O(log(n))
 	fn delete_min(&self) -> Self {
 		match self.head.as_ref() {
 			None => Self::empty(),
@@ -110,6 +119,36 @@ impl<T: Ord + Clone> IntoIterator for LeftistHeap<T> {
 	type IntoIter = IntoIter<T>;
 	fn into_iter(self) -> IntoIter<T> {
 		IntoIter { next: self }
+	}
+}
+
+impl<T: Ord + Clone> FromIterator<T> for LeftistHeap<T> {
+	/// full iteration = O(n)
+	fn from_iter<I>(iterator: I) -> Self where I: IntoIterator<Item=T> {
+		let mut iter = iterator.into_iter();
+		let mut stack: Vec<LeftistHeap<T>> = vec![];
+		while let Some(item) = iter.next() {
+			stack.push(LeftistHeap { head: link(1, item, None, None) });
+			loop {
+				// Only merge similar sized heaps
+				let end = stack.len();
+				if end < 2 { break; }
+				if rank(&stack[end-2].head) <= rank(&stack[end-1].head) { break; }
+				// Unwrap safe because above checks
+				let a = stack.pop().unwrap();
+				let b = stack.pop().unwrap();
+				stack.push(a.merge(&b));
+			}
+		}
+		// Merge remaining
+		while stack.len() > 1 {
+			// Unwrap safe because above check
+			let a = stack.pop().unwrap();
+			let b = stack.pop().unwrap();
+			stack.push(a.merge(&b));
+		}
+		// Pop final merged heap if there was any items
+		stack.pop().unwrap_or(Heap::empty())
 	}
 }
 
@@ -149,5 +188,24 @@ mod test {
 		let ordered = Vec::<i32>::from_iter(merged);
 		let sequence = Vec::<i32>::from_iter(1..8);
 		assert_eq!(ordered, sequence);
+	}
+
+	#[test]
+	fn from_iter() {
+		let original = vec![5,1,7,3,2,6,4];
+		let heap = LeftistHeap::<i32>::from_iter(original);
+
+		let ordered = Vec::<i32>::from_iter(heap);
+		let sequence = Vec::<i32>::from_iter(1..8);
+		assert_eq!(ordered, sequence);
+	}
+
+	#[test]
+	fn from_iter_empty() {
+		let original = vec![];
+		let heap = LeftistHeap::<i32>::from_iter(original);
+
+		let ordered = Vec::<i32>::from_iter(heap);
+		assert_eq!(ordered.len(), 0);
 	}
 }
