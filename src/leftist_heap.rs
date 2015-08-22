@@ -1,20 +1,19 @@
 use std::sync::Arc;
 use std::iter::FromIterator;
-
-pub trait Heap<T: Ord + Clone> {
-	fn empty() -> Self;
-	fn is_empty(&self) -> bool;
-	fn insert(&self, item: T) -> Self;
-	fn merge(&self, other: &Self) -> Self;
-	fn find_min(&self) -> Option<T>;
-	fn delete_min(&self) -> Self;
-}
+pub use super::heap::Heap;
 
 pub struct LeftistHeap<T> {
 	head: Link<T>,
 }
 
 type Link<T> = Option<Arc<Node<T>>>;
+
+pub struct Node<T> {
+	rank: i32,
+	elem: T,
+	a: Link<T>,
+	b: Link<T>,
+}
 
 fn link<T>(rank: i32, elem: T, a: Link<T>, b: Link<T>) -> Link<T> {
 	Some(Arc::new(Node {
@@ -30,13 +29,6 @@ fn rank<T>(link: &Link<T>) -> i32 {
 		None => 0,
 		Some(node) => node.rank,
 	}
-}
-
-pub struct Node<T> {
-	rank: i32,
-	elem: T,
-	a: Link<T>,
-	b: Link<T>,
 }
 
 impl<T: Ord + Clone> Heap<T> for LeftistHeap<T> {
@@ -207,5 +199,16 @@ mod test {
 
 		let ordered = Vec::<i32>::from_iter(heap);
 		assert_eq!(ordered.len(), 0);
+	}
+
+	#[test]
+	fn thread_safety() {
+		fn is_send<T: Send>(){}
+		is_send::<LeftistHeap<i32>>();
+
+		fn is_sync<T: Sync>(){}
+		is_sync::<LeftistHeap<i32>>();
+
+		assert!(true);
 	}
 }
