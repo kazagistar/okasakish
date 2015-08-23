@@ -139,4 +139,11 @@ mod test {
 
 		assert!(true);
 	}
+
+	use super::super::heap::properties;
+
+	#[test]
+	fn heap_quickchecks() {
+		properties::sorting::<i32, BinomialHeap<i32>>();
+	}
 }

@@ -16,16 +16,19 @@ pub mod properties {
 
 	pub fn sorting<T: Ord + Clone + Debug + Arbitrary, H: Debug + Heap<T>>() {
 		fn prop<T: Ord + Clone + Debug, H: Debug + Heap<T>>(mut input: Vec<T>) -> bool {
+			// Put all items in heap
 			let mut heap: H = Heap::empty();
 			for item in input.iter() {
 				heap = heap.insert(item.clone());
 			}
+			// Take all items from heap
 			let mut output: Vec<T> = vec![];
 			loop {
 				if heap.is_empty() { break; }
 				output.push(heap.find_min().unwrap());
 				heap = heap.delete_min();
 			}
+			// Output should be sorted input
 			input.sort();
 			input == output
 		}
