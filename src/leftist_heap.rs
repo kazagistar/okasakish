@@ -2,12 +2,14 @@ use std::sync::Arc;
 use std::iter::FromIterator;
 pub use super::heap::Heap;
 
+#[derive(Debug)]
 pub struct LeftistHeap<T> {
 	head: Link<T>,
 }
 
 type Link<T> = Option<Arc<Node<T>>>;
 
+#[derive(Debug)]
 pub struct Node<T> {
 	rank: i32,
 	elem: T,
@@ -210,5 +212,12 @@ mod test {
 		is_sync::<LeftistHeap<i32>>();
 
 		assert!(true);
+	}
+
+	use super::super::heap::properties;
+
+	#[test]
+	fn heap_quickchecks() {
+		properties::sorting::<i32, LeftistHeap<i32>>();
 	}
 }

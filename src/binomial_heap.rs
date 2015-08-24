@@ -60,7 +60,7 @@ impl <T: Ord + Clone> Heap<T> for BinomialHeap<T> {
 				(Some(x), Some(y), Some(z)) => { c = Some(link(x,y)); Some(z) }
 			});
 		}
-		if let Some(&None) = result.last() {
+		while let Some(&None) = result.last() {
 			result.pop();
 		}
 		BinomialHeap { trees: result }
@@ -138,5 +138,12 @@ mod test {
 		is_sync::<BinomialHeap<i32>>();
 
 		assert!(true);
+	}
+
+	use super::super::heap::properties;
+
+	#[test]
+	fn heap_quickchecks() {
+		properties::sorting::<i32, BinomialHeap<i32>>();
 	}
 }
