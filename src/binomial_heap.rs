@@ -60,7 +60,7 @@ impl <T: Ord + Clone> Heap<T> for BinomialHeap<T> {
 				(Some(x), Some(y), Some(z)) => { c = Some(link(x,y)); Some(z) }
 			});
 		}
-		if let Some(&None) = result.last() {
+		while let Some(&None) = result.last() {
 			result.pop();
 		}
 		BinomialHeap { trees: result }
